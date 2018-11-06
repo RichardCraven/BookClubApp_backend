@@ -84,4 +84,4 @@ mongoose.connect('mongodb://bookclub_masteruser:Kwalton33!@ds137703.mlab.com:377
 })
 
 app.use('/auth', auth.router)
-app.listen(3000) 
+app.listen(process.env.PORT || 3000) 
