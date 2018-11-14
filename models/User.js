@@ -1,12 +1,28 @@
 var mongoose = require('mongoose')
 var bcrypt = require('bcrypt-nodejs')
 
+// var childSchema = new Schema({ friend: 'string' });
+
+// var friend = new mongoose.Schema({
+//     name: String,
+//     original_id: String
+// })
+
 var userSchema = new mongoose.Schema({
     name: String,
     email: String,
     pwd: String,
-    description: String
-})
+    description: String,
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    friend_requests:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'  
+    }],
+    admin: Boolean
+    })
 
 userSchema.pre('save', function(next) {
     var user = this
