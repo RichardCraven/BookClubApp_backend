@@ -60,27 +60,45 @@ app.post('/post', auth.checkAuthenticated, (req, res) => {
 })
 app.post('/add_connection', auth.checkAuthenticated, async (req, res) => {
     var userData = req.body
+    
+    var newFriend = await User.findOne({ _id: userData.id })
     var user = await User.findOne({ _id: req.userId })
-    var newFriend = await User.find({ _id: userData.id })
-    console.log('ahoy! newfriend is ', newFriend)
-    if(user.friends.indexOf(userData.id.toString()) > -1){
-        return res.status(501).send({ message: 'Already a friend!' })
+    
+    if(!user) return res.status(501).send({ message: 'No User!' })
+
+    if(user.friends.indexOf(userData.id.toString()) > -1) return res.status(501).send({ message: 'Already a friend!' })
+
+    if(user.inbound_friend_requests.indexOf(newFriend._id.toString()) > -1){
+        console.log('removing inbound')
+        var inbound = user.inbound_friend_requests;
+        inbound.remove(newFriend._id)
+        // user.save()
     }
-    if(user && newFriend)
-        user.friends.push(userData.id)
-        user.save()
+    if(newFriend.outbound_friend_requests.indexOf(user._id.toString()) > -1){
+        console.log('removing outbound')
+        var outbound = newFriend.outbound_friend_requests;
+        outbound.remove(user._id)
+        // newFriend.save()
+    }
+    user.friends.push(newFriend._id)
+    user.save()
+    newFriend.friends.push(user._id)
+    newFriend.save()
 })
 app.post('/request_connection', auth.checkAuthenticated, async (req, res) => {
     var userData = req.body
     var user = await User.findOne({ _id: req.userId })
     var newFriend = await User.findOne({ _id: userData.id })
-    console.log('ahoy! user is ', user, 'newfriend is ', newFriend)
-    if(newFriend.friend_requests.indexOf(req.userId)>-1){
+    console.log('ahoy! user is ', user.name, 'newfriend is ', newFriend.name)
+
+    if(newFriend.inbound_friend_requests.indexOf(req.userId)>-1){
         return res.status(501).send({ message: 'Already requested!' })
     }
     if(user && newFriend)
-        newFriend.friend_requests.push(user)
+        newFriend.inbound_friend_requests.push(user)
+        user.outbound_friend_requests.push(newFriend)
         newFriend.save()
+        user.save()
         return res.status(200).send({message: 'Request sent'})
 })
 app.get('/users', async (req, res) => {
